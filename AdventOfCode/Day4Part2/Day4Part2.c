@@ -2,54 +2,75 @@
 #include <stdbool.h>
 
 /*
---- Day 4: Passport Processing ---
+--- Part Two ---
 
-You arrive at the airport only to realize that you grabbed your North Pole Credentials instead of your passport. While these documents are extremely similar, North Pole Credentials aren't issued by a country and therefore aren't actually valid documentation for travel in most of the world.
+The line is moving more quickly now, but you overhear airport security talking about how passports with invalid data are getting through. Better add some data validation, quick!
 
-It seems like you're not the only one having problems, though; a very long line has formed for the automatic passport scanners, and the delay could upset your travel itinerary.
+You can continue to ignore the cid field, but each other field has strict rules about what values are valid for automatic validation:
 
-Due to some questionable network security, you realize you might be able to solve both of these problems at the same time.
+	byr (Birth Year) - four digits; at least 1920 and at most 2002.
+	iyr (Issue Year) - four digits; at least 2010 and at most 2020.
+	eyr (Expiration Year) - four digits; at least 2020 and at most 2030.
+	hgt (Height) - a number followed by either cm or in:
+		If cm, the number must be at least 150 and at most 193.
+		If in, the number must be at least 59 and at most 76.
+	hcl (Hair Color) - a # followed by exactly six characters 0-9 or a-f.
+	ecl (Eye Color) - exactly one of: amb blu brn gry grn hzl oth.
+	pid (Passport ID) - a nine-digit number, including leading zeroes.
+	cid (Country ID) - ignored, missing or not.
 
-The automatic passport scanners are slow because they're having trouble detecting which passports have all required fields. The expected fields are as follows:
+Your job is to count the passports where all required fields are both present and valid according to the above rules. Here are some example values:
 
-	byr (Birth Year)
-	iyr (Issue Year)
-	eyr (Expiration Year)
-	hgt (Height)
-	hcl (Hair Color)
-	ecl (Eye Color)
-	pid (Passport ID)
-	cid (Country ID)
+byr valid:   2002
+byr invalid: 2003
 
-Passport data is validated in batch files (your puzzle input). Each passport is represented as a sequence of key:value pairs separated by spaces or newlines. Passports are separated by blank lines.
+hgt valid:   60in
+hgt valid:   190cm
+hgt invalid: 190in
+hgt invalid: 190
 
-Here is an example batch file containing four passports:
+hcl valid:   #123abc
+hcl invalid: #123abz
+hcl invalid: 123abc
 
-ecl:gry pid:860033327 eyr:2020 hcl:#fffffd
-byr:1937 iyr:2017 cid:147 hgt:183cm
+ecl valid:   brn
+ecl invalid: wat
 
-iyr:2013 ecl:amb cid:350 eyr:2023 pid:028048884
-hcl:#cfa07d byr:1929
+pid valid:   000000001
+pid invalid: 0123456789
 
-hcl:#ae17e1 iyr:2013
-eyr:2024
-ecl:brn pid:760753108 byr:1931
-hgt:179cm
+Here are some invalid passports:
 
-hcl:#cfa07d eyr:2025 pid:166559648
-iyr:2011 ecl:brn hgt:59in
+eyr:1972 cid:100
+hcl:#18171d ecl:amb hgt:170 pid:186cm iyr:2018 byr:1926
 
-The first passport is valid - all eight fields are present. The second passport is invalid - it is missing hgt (the Height field).
+iyr:2019
+hcl:#602927 eyr:1967 hgt:170cm
+ecl:grn pid:012533040 byr:1946
 
-The third passport is interesting; the only missing field is cid, so it looks like data from North Pole Credentials, not a passport at all! Surely, nobody would mind if you made the system temporarily ignore missing cid fields. Treat this "passport" as valid.
+hcl:dab227 iyr:2012
+ecl:brn hgt:182cm pid:021572410 eyr:2020 byr:1992 cid:277
 
-The fourth passport is missing two fields, cid and byr. Missing cid is fine, but missing any other field is not, so this passport is invalid.
+hgt:59cm ecl:zzz
+eyr:2038 hcl:74454a iyr:2023
+pid:3556412378 byr:2007
 
-According to the above rules, your improved system would report 2 valid passports.
+Here are some valid passports:
 
-Count the number of valid passports - those that have all required fields. Treat cid as optional. In your batch file, how many passports are valid?
+pid:087499704 hgt:74in ecl:grn iyr:2012 eyr:2030 byr:1980
+hcl:#623a2f
 
-Your puzzle answer was 190.*/
+eyr:2029 ecl:blu cid:129 byr:1989
+iyr:2014 pid:896056539 hcl:#a97842 hgt:165cm
+
+hcl:#888785
+hgt:164cm byr:2001 iyr:2015 cid:88
+pid:545766238 ecl:hzl
+eyr:2022
+
+iyr:2010 hgt:158cm hcl:#b6652a ecl:blu byr:1944 eyr:2021 pid:093154719
+
+Count the number of valid passports - those that have all required fields and valid values. Continue to treat cid as optional. In your batch file, how many passports are valid?*/
 
 typedef struct Passport
 {
@@ -85,10 +106,10 @@ int getNumPassports(char* input[], int inputLength)
 }
 
 //Check if each passport has the right fields set (byr, iyr, eyr, hgt, hcl, ecl, pid) and return the number of valid passports
-int validatePassports(Passport *passports, int numPassports) 
+int validatePassports(Passport* passports, int numPassports)
 {
 	int validPassports = 0;
-	
+
 	for (int i = 0; i < numPassports; i++)
 	{
 		if (passports[i].byr && passports[i].iyr && passports[i].eyr && passports[i].hgt && passports[i].hcl && passports[i].ecl && passports[i].pid) validPassports++;
@@ -111,6 +132,38 @@ void initialisePassports(Passport* passports, int numPassports)
 		passports[i].pid = false;
 		passports[i].cid = false;
 	}
+}
+
+char *getFieldValue(char* input, int startIndex)
+{
+	int endIndex = 0;
+	int strlength = 0;
+	int inputIndex = startIndex;
+	
+	for (int i = startIndex; i < strlen(input); i++)
+	{
+		if (input[i] == ' ')
+		{
+			endIndex = i;
+			break;
+		}
+	}
+
+	if (endIndex == 0) endIndex = strlen(input);
+
+	strlength = endIndex - startIndex;
+
+	char* fieldValue = malloc((strlength + 1) * sizeof(char));
+
+	for (int i = 0; i < strlength; i++)
+	{
+		fieldValue[i] = input[inputIndex];
+		inputIndex++;
+	}
+
+	fieldValue[strlength] = '\0';
+
+	return fieldValue;
 }
 
 int main(int argc, char* argv[])
@@ -1082,7 +1135,7 @@ int main(int argc, char* argv[])
 	int passportIndex = 0;									//The index of the current passport
 
 	//Setup and initialise an array of passports
-	Passport *passports = malloc(numPassports * sizeof(Passport));
+	Passport* passports = malloc(numPassports * sizeof(Passport));
 	initialisePassports(passports, numPassports);
 
 	//loop over the input array
@@ -1101,8 +1154,32 @@ int main(int argc, char* argv[])
 					char tempString[] = { input[inputIndex][i - 3], input[inputIndex][i - 2], input[inputIndex][i - 1], "\0" };
 
 					//Check with field was found and set the appropriate filed in passport struct
-					if (!strcmp(tempString, "byr")) passports[passportIndex].byr = true;
-					else if (!strcmp(tempString, "iyr")) passports[passportIndex].iyr = true;
+					if (!strcmp(tempString, "byr")) 
+					{
+						int byr = atoi(getFieldValue(input[inputIndex], i + 1));
+
+						if (1920 <= byr && byr <= 2002)
+						{
+							passports[passportIndex].byr = true;
+						}
+						else
+						{
+							printf("Invalid birth year %d\n", byr);
+						}
+					}
+					else if (!strcmp(tempString, "iyr")) 
+					{
+						int iyr = atoi(getFieldValue(input[inputIndex], i + 1));
+
+						if (2010 <= iyr && iyr <= 2020)
+						{
+							passports[passportIndex].iyr = true;
+						}
+						else
+						{
+							printf("Invalid issue year %d\n", iyr);
+						}
+					}
 					else if (!strcmp(tempString, "eyr")) passports[passportIndex].eyr = true;
 					else if (!strcmp(tempString, "hgt")) passports[passportIndex].hgt = true;
 					else if (!strcmp(tempString, "hcl")) passports[passportIndex].hcl = true;
@@ -1112,7 +1189,7 @@ int main(int argc, char* argv[])
 				}
 
 			}
-			
+
 			inputIndex++;
 		}
 
