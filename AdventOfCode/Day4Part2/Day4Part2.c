@@ -1,5 +1,8 @@
 #include <stdio.h>
 #include <stdbool.h>
+#include <string.h>
+#include <ctype.h>
+#include "re.h"
 
 /*
 --- Part Two ---
@@ -70,7 +73,9 @@ eyr:2022
 
 iyr:2010 hgt:158cm hcl:#b6652a ecl:blu byr:1944 eyr:2021 pid:093154719
 
-Count the number of valid passports - those that have all required fields and valid values. Continue to treat cid as optional. In your batch file, how many passports are valid?*/
+Count the number of valid passports - those that have all required fields and valid values. Continue to treat cid as optional. In your batch file, how many passports are valid?
+
+Your puzzle answer was 121.*/
 
 typedef struct Passport
 {
@@ -83,6 +88,21 @@ typedef struct Passport
 	bool pid;
 	bool cid;
 } Passport;
+
+#define BYR_MIN 1920
+#define BYR_MAX 2002
+#define IYR_MIN 2010
+#define IYR_MAX 2020
+#define EYR_MIN 2020
+#define EYR_MAX 2030
+#define HGT_MIN_CM 150
+#define HGT_MAX_CM 193
+#define HGT_MIN_IN 59
+#define HGT_MAX_IN 76
+#define NUM_EYE_COLOURS 7
+#define LENGTH_EYE_COLOURS 4	
+
+const char eyeColours[NUM_EYE_COLOURS][LENGTH_EYE_COLOURS] = { "amb", "blu", "brn", "gry", "grn", "hzl", "oth" };
 
 //Loop through the input counting the number of empty lines to get the number of passports in the input
 int getNumPassports(char* input[], int inputLength)
@@ -134,6 +154,7 @@ void initialisePassports(Passport* passports, int numPassports)
 	}
 }
 
+//Get the value out of a passport field
 char *getFieldValue(char* input, int startIndex)
 {
 	int endIndex = 0;
@@ -153,7 +174,7 @@ char *getFieldValue(char* input, int startIndex)
 
 	strlength = endIndex - startIndex;
 
-	char* fieldValue = malloc((strlength + 1) * sizeof(char));
+	char* fieldValue = (char*)malloc((strlength + 1) * sizeof(char));
 
 	for (int i = 0; i < strlength; i++)
 	{
@@ -1135,7 +1156,7 @@ int main(int argc, char* argv[])
 	int passportIndex = 0;									//The index of the current passport
 
 	//Setup and initialise an array of passports
-	Passport* passports = malloc(numPassports * sizeof(Passport));
+	Passport* passports = (Passport*)malloc(numPassports * sizeof(Passport));
 	initialisePassports(passports, numPassports);
 
 	//loop over the input array
@@ -1151,41 +1172,107 @@ int main(int argc, char* argv[])
 				if (input[inputIndex][i] == ':')
 				{
 					//Get which field was found
-					char tempString[] = { input[inputIndex][i - 3], input[inputIndex][i - 2], input[inputIndex][i - 1], "\0" };
+					char fieldName[] = { input[inputIndex][i - 3], input[inputIndex][i - 2], input[inputIndex][i - 1], '\0' };
 
 					//Check with field was found and set the appropriate filed in passport struct
-					if (!strcmp(tempString, "byr")) 
+					if (strcmp(fieldName, "byr") == 0) 
 					{
-						int byr = atoi(getFieldValue(input[inputIndex], i + 1));
+						int byr = atoi(getFieldValue(input[inputIndex], i + 1));	//Value in the birth year field, converted to an int
 
-						if (1920 <= byr && byr <= 2002)
+						if (BYR_MIN <= byr && byr <= BYR_MAX) passports[passportIndex].byr = true;
+						//else printf("Invalid birth year %d on passport %d\n", byr, passportIndex + 1);
+					}
+					else if (strcmp(fieldName, "iyr") == 0) 
+					{
+						int iyr = atoi(getFieldValue(input[inputIndex], i + 1));	//Value in the issue year field, converted to an int
+
+						if (IYR_MIN <= iyr && iyr <= IYR_MAX) passports[passportIndex].iyr = true;
+						//else printf("Invalid issue year %d on passport %d\n", iyr, passportIndex + 1);
+					}
+					else if (strcmp(fieldName, "eyr") == 0)
+					{
+						int eyr = atoi(getFieldValue(input[inputIndex], i + 1));	//Value in the expiry year field, converted to an int
+
+						if (EYR_MIN <= eyr && eyr <= EYR_MAX) passports[passportIndex].eyr = true;
+						//else printf("Invalid expiration year %d on passport %d\n", eyr, passportIndex + 1);
+					}
+					else if (strcmp(fieldName, "hgt") == 0)
+					{
+						char *hgt = getFieldValue(input[inputIndex], i + 1);		//Value in the height field
+
+						char unit[] = { hgt[strlen(hgt) - 2], hgt[strlen(hgt) - 1], '\0' };		//Get the unit from the end of the string
+						
+						char* fieldName = malloc((strlen(hgt) + 1) * sizeof(char));	//A temporary version of hgt to store the value without the unit
+						
+						strcpy(fieldName, hgt);
+						
+						fieldName[strlen(hgt) - 2] = '\0';		//Cut the unit off the height string
+						
+						int hgtValue = atoi(fieldName);			//Convert height string to an int
+
+						//Check which unit height was entered in and check against appropriate bounds
+						if (strcmp(unit, "cm") == 0)
 						{
-							passports[passportIndex].byr = true;
+							if (HGT_MIN_CM <= hgtValue && hgtValue <= HGT_MAX_CM) passports[passportIndex].hgt = true;
+							//else printf("Invalid height %s, not in bounds on passport %d\n", hgt, passportIndex + 1);
 						}
+						else if (strcmp(unit, "in") == 0)
+						{
+							if (HGT_MIN_IN <= hgtValue && hgtValue <= HGT_MAX_IN) passports[passportIndex].hgt = true;
+							//else printf("Invalid height %s, not in bounds on passport %d\n", hgt, passportIndex + 1);
+						}
+						//else printf("Invalid height %s, no unit on passport %d\n", hgt, passportIndex + 1);
+					}
+					else if (strcmp(fieldName, "hcl") == 0)
+					{
+						char *hcl = getFieldValue(input[inputIndex], i + 1);	//Value in the hair colour field
+						int temp = 0;											//Variable to fill out regex function
+
+						//Validate hair colour value with regex
+						if (re_match("#[\\da-f][\\da-f][\\da-f][\\da-f][\\da-f][\\da-f]", hcl, &temp) != -1) passports[passportIndex].hcl = true;
+						//else printf("\nInvalid hair colour %s on passport %d\n", hcl, passportIndex + 1);
+					}
+					else if (strcmp(fieldName, "ecl") == 0) 
+					{
+						char* ecl = getFieldValue(input[inputIndex], i + 1);	//Value in the eye colour field
+						int temp = 0;											//Variable to fill out regex function
+
+						//Loop over all eye colours and check if ecl stores a valid eye colour
+						for (int j = 0; j < NUM_EYE_COLOURS; j++)
+						{
+							if (strcmp(ecl, eyeColours[j]) == 0)
+							{
+								passports[passportIndex].ecl = true;
+								break;
+							}
+						}
+
+						//if(passports[passportIndex].ecl == false) printf("\nInvalid eye colour %s on passport %d\n", ecl, passportIndex + 1);
+					}
+					else if (strcmp(fieldName, "pid") == 0)
+					{
+						char* pid = getFieldValue(input[inputIndex], i + 1);	//Value in the passport ID field
+						int temp = 0;											//Variable to fill out regex function
+
+						//Validate passport ID length
+						if (strlen(pid) != 9) {} //printf("Passport ID %s on passport %d is too short/long\n", pid, passportIndex + 1);
 						else
 						{
-							printf("Invalid birth year %d\n", byr);
-						}
-					}
-					else if (!strcmp(tempString, "iyr")) 
-					{
-						int iyr = atoi(getFieldValue(input[inputIndex], i + 1));
+							passports[passportIndex].pid = true;
 
-						if (2010 <= iyr && iyr <= 2020)
-						{
-							passports[passportIndex].iyr = true;
-						}
-						else
-						{
-							printf("Invalid issue year %d\n", iyr);
+							//Validate passport ID doesn't contain any illegal characters
+							for (int j = 0; j < strlen(pid); j++)
+							{
+								if (!isdigit(pid[j])) 
+								{
+									//printf("Passport ID %s on passport %d contains illegal characters\n", pid, passportIndex + 1);
+									passports[passportIndex].pid = false;
+									break;
+								}
+							}
 						}
 					}
-					else if (!strcmp(tempString, "eyr")) passports[passportIndex].eyr = true;
-					else if (!strcmp(tempString, "hgt")) passports[passportIndex].hgt = true;
-					else if (!strcmp(tempString, "hcl")) passports[passportIndex].hcl = true;
-					else if (!strcmp(tempString, "ecl")) passports[passportIndex].ecl = true;
-					else if (!strcmp(tempString, "pid")) passports[passportIndex].pid = true;
-					else if (!strcmp(tempString, "cid")) passports[passportIndex].cid = true;
+					//else if (strcmp(fieldName, "cid") == 0) passports[passportIndex].cid = true;
 				}
 
 			}
@@ -1196,6 +1283,6 @@ int main(int argc, char* argv[])
 		passportIndex++;
 		inputIndex++;
 	}
-
-	printf("%d passports are valid.", validatePassports(passports, numPassports));
+	printf("\n");
+	printf("%d passports are valid.\n", validatePassports(passports, numPassports));
 }
