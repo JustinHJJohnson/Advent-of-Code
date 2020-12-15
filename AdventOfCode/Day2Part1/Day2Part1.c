@@ -23,7 +23,7 @@ In the above example, 2 passwords are valid.The middle password, cdefg, is not; 
 
 How many passwords are valid according to their policies ?
 
-Your puzzle answer was 483.8*/
+Your puzzle answer was 483*/
 
 int main(int argc, char* argv[])
 {

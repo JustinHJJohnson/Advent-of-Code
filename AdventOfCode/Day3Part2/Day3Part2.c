@@ -34,14 +34,8 @@ int numTreesEncountered(char* input[], int rightMove, int downMove, int width, i
 	while (currentPos.y + downMove < height)
 	{
 		//If the next move is greater than width, reduce it by width to simulate infinite repeating to the right
-		if (currentPos.x + rightMove >= width)
-		{
-			currentPos.x += rightMove - width;
-		}
-		else
-		{
-			currentPos.x += rightMove;
-		}
+		if (currentPos.x + rightMove >= width) currentPos.x += rightMove - width;
+		else currentPos.x += rightMove;
 
 		currentPos.y += downMove;
 

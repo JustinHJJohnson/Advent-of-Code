@@ -59,6 +59,7 @@ Starting at the top-left corner of your map and following a slope of right 3 and
 
 Your puzzle answer was 193.
 */
+
 typedef struct Position {
 	int x;
 	int y;
@@ -404,14 +405,8 @@ int main(int argc, char* argv[])
 	while (currentPos.y + downMove < height)
 	{
 		//If the next move is greater than width, reduce it by width to simulate infinite repeating to the right
-		if (currentPos.x + rightMove >= width)
-		{
-			currentPos.x += rightMove - width;
-		}
-		else
-		{
-			currentPos.x += rightMove;
-		}
+		if (currentPos.x + rightMove >= width) currentPos.x += rightMove - width;
+		else currentPos.x += rightMove;
 
 		currentPos.y += downMove;
 

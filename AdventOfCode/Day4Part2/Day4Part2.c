@@ -112,7 +112,7 @@ int getNumPassports(char* input[], int inputLength)
 
 	while (inputIndex < inputLength)
 	{
-		if (input[inputIndex][0] == NULL)
+		if (input[inputIndex][0] == 0)
 		{
 			numPass++;
 		}
@@ -1163,7 +1163,7 @@ int main(int argc, char* argv[])
 	while (inputIndex < inputLength)
 	{
 		//Keep moving through the array till an empty line is found, signalling the end of the current passport
-		while (inputIndex < inputLength && input[inputIndex][0] != NULL)
+		while (inputIndex < inputLength && input[inputIndex][0] != 0)
 		{
 			//Loop through the passport details
 			for (int i = 0; i < strlen(input[inputIndex]); i++)
@@ -1202,7 +1202,7 @@ int main(int argc, char* argv[])
 
 						char unit[] = { hgt[strlen(hgt) - 2], hgt[strlen(hgt) - 1], '\0' };		//Get the unit from the end of the string
 						
-						char* fieldName = malloc((strlen(hgt) + 1) * sizeof(char));	//A temporary version of hgt to store the value without the unit
+						char* fieldName = (char*)malloc((strlen(hgt) + 1) * sizeof(char));	//A temporary version of hgt to store the value without the unit
 						
 						strcpy(fieldName, hgt);
 						

@@ -71,7 +71,7 @@ int getNumPassports(char* input[], int inputLength)
 
 	while (inputIndex < inputLength)
 	{
-		if (input[inputIndex][0] == NULL)
+		if (input[inputIndex][0] == 0)
 		{
 			numPass++;
 		}
@@ -1082,14 +1082,14 @@ int main(int argc, char* argv[])
 	int passportIndex = 0;									//The index of the current passport
 
 	//Setup and initialise an array of passports
-	Passport *passports = malloc(numPassports * sizeof(Passport));
+	Passport *passports = (Passport*)malloc(numPassports * sizeof(Passport));
 	initialisePassports(passports, numPassports);
 
 	//loop over the input array
 	while (inputIndex < inputLength)
 	{
 		//Keep moving through the array till an empty line is found, signalling the end of the current passport
-		while (inputIndex < inputLength && input[inputIndex][0] != NULL)
+		while (inputIndex < inputLength && input[inputIndex][0] != 0)
 		{
 			//Loop through the passport details
 			for (int i = 0; i < strlen(input[inputIndex]); i++)

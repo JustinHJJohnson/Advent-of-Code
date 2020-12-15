@@ -2,50 +2,19 @@
 #include <stdbool.h>
 
 /*
---- Day 5: Binary Boarding ---
+--- Part Two ---
 
-You board your plane only to discover a new problem: you dropped your boarding pass! You aren't sure which seat is yours, and all of the flight attendants are busy with the flood of people that suddenly made it through passport control.
+Ding! The "fasten seat belt" signs have turned on. Time to find your seat.
 
-You write a quick program to use your phone's camera to scan all of the nearby boarding passes (your puzzle input); perhaps you can find your seat through process of elimination.
+It's a completely full flight, so your seat should be the only missing boarding pass in your list. However, there's a catch: some of the seats at the very front and back of the plane don't exist on this aircraft, so they'll be missing from your list as well.
 
-Instead of zones or groups, this airline uses binary space partitioning to seat people. A seat might be specified like FBFBBFFRLR, where F means "front", B means "back", L means "left", and R means "right".
+Your seat wasn't at the very front or back, though; the seats with IDs +1 and -1 from yours will be in your list.
 
-The first 7 characters will either be F or B; these specify exactly one of the 128 rows on the plane (numbered 0 through 127). Each letter tells you which half of a region the given seat is in. Start with the whole list of rows; the first letter indicates whether the seat is in the front (0 through 63) or the back (64 through 127). The next letter indicates which half of that region the seat is in, and so on until you're left with exactly one row.
+What is the ID of your seat?
 
-For example, consider just the first seven characters of FBFBBFFRLR:
+Your puzzle answer was 711.*/
 
-	Start by considering the whole range, rows 0 through 127.
-	F means to take the lower half, keeping rows 0 through 63.
-	B means to take the upper half, keeping rows 32 through 63.
-	F means to take the lower half, keeping rows 32 through 47.
-	B means to take the upper half, keeping rows 40 through 47.
-	B keeps rows 44 through 47.
-	F keeps rows 44 through 45.
-	The final F keeps the lower of the two, row 44.
-
-The last three characters will be either L or R; these specify exactly one of the 8 columns of seats on the plane (numbered 0 through 7). The same process as above proceeds again, this time with only three steps. L means to keep the lower half, while R means to keep the upper half.
-
-For example, consider just the last 3 characters of FBFBBFFRLR:
-
-	Start by considering the whole range, columns 0 through 7.
-	R means to take the upper half, keeping columns 4 through 7.
-	L means to take the lower half, keeping columns 4 through 5.
-	The final R keeps the upper of the two, column 5.
-
-So, decoding FBFBBFFRLR reveals that it is the seat at row 44, column 5.
-
-Every seat also has a unique seat ID: multiply the row by 8, then add the column. In this example, the seat has ID 44 * 8 + 5 = 357.
-
-Here are some other boarding passes:
-
-	BFFFBBFRRR: row 70, column 7, seat ID 567.
-	FFFBBBFRRR: row 14, column 7, seat ID 119.
-	BBFFBBFRLL: row 102, column 4, seat ID 820.
-
-As a sanity check, look through your list of boarding passes. What is the highest seat ID on a boarding pass?
-
-Your puzzle answer was 933.*/
-
+//Calculate the seat IDs from the boarding pass by converting it to a binary number where 'B' and 'R' = 1
 int calculateSeatID(char* input)
 {
 	int seatID = 0;
@@ -994,14 +963,32 @@ int main(int argc, char* argv[])
 	};
 
 	int inputLength = sizeof(input) / sizeof(char*);		//The length of the input array
-	int highestSeatID = 0;									//The highest seat ID
+	int *seatIDs = (int*)malloc(inputLength * sizeof(int));	//All the seat IDs
 
-	//Loop through every boarding pass and calculate the seat ID
-	for (int i = 0; i < inputLength; i++)
+	//Calculate all the seat IDs and put them in the seat ID array
+	for (int i = 0; i < inputLength; i++) seatIDs[i] = calculateSeatID(input[i]);
+
+	//Sort the seat IDs into ascending order using bubblesort (too lazy to do more efficient method)
+	for (int i = 0; i < inputLength - 1; i++)
 	{
-		int temp = calculateSeatID(input[i]);
-		if (highestSeatID < temp) highestSeatID = temp;
+		for (int j = i + 1; j < inputLength; j++)
+		{
+			if (seatIDs[i] > seatIDs[j])
+			{
+				int temp = seatIDs[i];
+				seatIDs[i] = seatIDs[j];
+				seatIDs[j] = temp;
+			}
+		}
 	}
 
-	printf("Highest seat ID is %d", highestSeatID);
+	//Loop through the seat IDs to find the missing boarding pass, a.k.a your boarding pass
+	for (int i = 1; i < inputLength; i++)
+	{
+		if (seatIDs[i] - 1 != seatIDs[i - 1])
+		{
+			printf("Your seat is %d\n", seatIDs[i] - 1);
+			return 0;
+		}
+	}
 }
