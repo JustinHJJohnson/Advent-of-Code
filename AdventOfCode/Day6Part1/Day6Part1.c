@@ -2319,7 +2319,7 @@ int main(int argc, char* argv[])
 			for (int i = 0; i < strlen(input[inputIndex]); i++)
 			{
                 //Check if the question found has already been answered by someone else
-				if (questionsAnswered[input[inputIndex][i] - 'a'] == false)
+				if (!questionsAnswered[input[inputIndex][i] - 'a'])
 				{
 					questionsAnswered[input[inputIndex][i] - 'a'] = true;
                     numQuestionsAnswered++;

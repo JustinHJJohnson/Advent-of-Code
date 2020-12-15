@@ -5,5 +5,9 @@
         "**/*.ilk": true,
         "**/*.obj": true,
         "**/*.pdb": true
+    },
+    "discord.workspaceElapsedTime": true,
+    "files.associations": {
+        "xutility": "c"
     }
 }
