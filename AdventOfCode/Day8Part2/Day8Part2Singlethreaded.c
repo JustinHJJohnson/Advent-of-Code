@@ -39,135 +39,100 @@ acc +6  | 6
 
 After the last instruction (acc +6), the program terminates by attempting to run the instruction below the last instruction in the file. With this change, after the program terminates, the accumulator contains the value 8 (acc +1, acc +1, acc +6).
 
-Fix the program so that it terminates normally by changing exactly one jmp (to nop) or nop (to jmp). What is the value of the accumulator after the program terminates?*/
+Fix the program so that it terminates normally by changing exactly one jmp (to nop) or nop (to jmp). What is the value of the accumulator after the program terminates?
 
-LONG solutionFound = 0;     //Variable that gets increased when the solution is found
-LONG threadsRun = 0;
+Your puzzle answer was 733.*/
 
-//Get the value out of a passport field
-//char* getInstructionValue(char* input, int startIndex, char* output)
-void inline getInstructionValue(char* input, int startIndex, char* output)
+//Get the value out of an instruction
+int getInstructionValue(char* input, int startIndex)
 {
-	int endIndex = strlen(input);
-	//int strlength = 0;
+	//Calulate the start and end of the instruction value and how many digits it is
+	int endIndex = strlen(input) - 1;
 	int inputIndex = startIndex;
+	int strLength = (endIndex + 1) - startIndex;
 
-	//strlength = endIndex - startIndex;
+	//Allocate memory for the string using calloc so each value in the string is inialised to the string terminating character
+	char* instructionValue = (char*)calloc((size_t)strLength + 1, sizeof(char));
 
-	//char* instructionValue = (char*)calloc((strlength + 1), sizeof(char));
-    char instructionValue[4];
-
-	for (int i = startIndex; i < endIndex; i++)
+	//Loop over the instruction value and copy it to another string
+	for (int i = 0; i < strLength; i++)
 	{
- 		instructionValue[i] = input[inputIndex];
+		instructionValue[i] = input[inputIndex];
 		inputIndex++;
 	}
 
-	instructionValue[endIndex] = '\0';
+	//Convert the value in the instruction to an int
+	int output = atoi(instructionValue);
 
-	strcpy(output, instructionValue);
+	//Free up the memory used to store the string version of the instruction value
+	free(instructionValue);
 
-	//return instructionValue;
+	if (input[startIndex - 1] == '+') return output;
+	else return output / -1;
 }
 
 //Run the input instructions, changing the instruction at the instructionChangeIndex
-//void changeInstruction(char *input[], int instructionChangeIndex, int inputLength)
-int changeInstruction(char *input[], int instructionChangeIndex, int inputLength)
+int changeInstruction(char* input[], int instructionChangeIndex, int inputLength)
 {
-    //InterlockedIncrement(&threadsRun);
-    //printf("started thread %d\n", threadsRun);
-    int inputIndex = 0;								                        	//Which index in the input array we are up to
-    int accumulator = 0;                                                        //The accumulator
-    bool *instructionsRan = (bool*)calloc(inputLength - 1, sizeof(bool));       //Array of all the instructions that have already been ran
-    char instructionChange[] = { input[instructionChangeIndex][0], input[instructionChangeIndex][1], input[instructionChangeIndex][2], '\0' };  //Index of the instruction that needs to be changed
+	int inputIndex = 0;																//Which index in the input array we are up to
+	int accumulator = 0;															//The accumulator
+	bool* instructionsRan = (bool*)calloc((size_t)inputLength - 1, sizeof(bool));	//Array of all the instructions that have already been ran
 
-    //Flip jmp instructions to nop and vice versa
-	if (input[inputIndex][0] == 'j')
-    {
-        input[instructionChangeIndex][0] = 'n';
-        input[instructionChangeIndex][1] = 'o';
-        input[instructionChangeIndex][2] = 'p';
-    }
-    else if (input[inputIndex][0] == 'n')
-    {
-        input[instructionChangeIndex][0] = 'j';
-        input[instructionChangeIndex][1] = 'm';
-        input[instructionChangeIndex][2] = 'p';
-    }
-
-    //loop over the input array until getting back to previously ran instructions or the end of the instructions
-	while (inputIndex != inputLength || instructionsRan[inputIndex] == 0)
+	//loop over the input array until getting back to previously ran instructions or the end of the instructions
+	while (inputIndex < inputLength - 1 && instructionsRan[inputIndex] == false)
 	{
+		//Check if this is the instruction to change and 
+		if (inputIndex == instructionChangeIndex)
+		{
+			if (input[inputIndex][0] == 'j')
+			{
+				instructionsRan[inputIndex] = true;
+				inputIndex++;
+			}
+			else if (input[inputIndex][0] == 'n')
+			{
+				instructionsRan[inputIndex] = true;
+
+				int instruction = getInstructionValue(input[inputIndex], 5);
+
+				inputIndex += instruction;
+			}
+		}
 		//Check which instruction to run
-        if (input[inputIndex][0] == 'a')
-        {
-            char instructionValue[4];
-			getInstructionValue(input[inputIndex], 5, instructionValue);
+		else if (input[inputIndex][0] == 'a')
+		{
+			int instruction = getInstructionValue(input[inputIndex], 5);
 
-			if(input[inputIndex][4] == '+') accumulator += atoi(instructionValue);
-            else accumulator -= atoi(instructionValue);
-			
-			//if(input[inputIndex][4] == '+') accumulator += atoi(getInstructionValue(input[inputIndex], 5));
-            //else accumulator -= atoi(getInstructionValue(input[inputIndex], 5));
+			accumulator += instruction;
 
-            instructionsRan[inputIndex] = true;
-            inputIndex++;
-        }
-        else if (input[inputIndex][0] == 'j')
-        {
-            instructionsRan[inputIndex] = true;
+			instructionsRan[inputIndex] = true;
+			inputIndex++;
+		}
+		else if (input[inputIndex][0] == 'j')
+		{
+			instructionsRan[inputIndex] = true;
 
-			char instructionValue[4];
-			getInstructionValue(input[inputIndex], 5, instructionValue);
+			int instruction = getInstructionValue(input[inputIndex], 5);
 
-			if(input[inputIndex][4] == '+') inputIndex += atoi(instructionValue);
-            else inputIndex -= atoi(instructionValue);
-
-            //if(input[inputIndex][4] == '+') inputIndex += atoi(getInstructionValue(input[inputIndex], 5));
-            //else inputIndex -= atoi(getInstructionValue(input[inputIndex], 5));
-
-        }
-        else if (input[inputIndex][0] == 'n')
-        {
-            instructionsRan[inputIndex] = true;
-            inputIndex++;
-        }
-
-        //printf("%s\n", instruction);
-
+			inputIndex += instruction;
+		}
+		else if (input[inputIndex][0] == 'n')
+		{
+			instructionsRan[inputIndex] = true;
+			inputIndex++;
+		}
 	}
 
-    if (inputIndex == inputLength) return accumulator;
+	free(instructionsRan);
+
+	if (inputIndex == inputLength - 1) return accumulator;
 	else return 0;
-
-    //if (inputIndex == inputLength) return accumulator;
-    //else return 0;
-}
-
-typedef struct ThreadData
-{
-	char** input;
-    int instructionChangeIndex;
-    int inputLength;
-} ThreadData;
-
-DWORD __stdcall changeInstructionStart(LPVOID threadData)
-{
-	// cast the pointer to void (i.e. an untyped pointer) into something we can use
-	ThreadData* data = (ThreadData*)threadData;
-
-    //printf("thread data %d\n", data->instructionChangeIndex);
-
-	// pass parameters through
-	changeInstruction(data->input, data->instructionChangeIndex, data->inputLength);
-
-	ExitThread(NULL);
 }
 
 int main(int argc, char* argv[])
 {
 	char* input[] =
-    {
+	{
 		"acc +29",
 		"acc +0",
 		"acc +36",
@@ -811,78 +776,43 @@ int main(int argc, char* argv[])
 		"jmp +1",
 	};
 
-    int threads = 12;
-    int inputLength = sizeof(input) / sizeof(char*);	                        //The length of the input array
-    int numInstructionsChange = 0;
-    int previousInstructionChange = 0;
-    int* instructionChangeIndexes;
+	int inputLength = sizeof(input) / sizeof(char*);    //The length of the input array
+	int numInstructionsChange = 0;                      //The number of instructions that can be changed to try to stop the halting problem
+	int currentIndex = 0;                               //The current index in the instructionChangeIndexes array                
+	int* instructionChangeIndexes;                      //Stores the indexes of all the instructions that can be changed
+    int solution = 0;                                   //The value of the accumulator when the code no longer halts
 
-    for(int i = 0; i < inputLength; i++)
-    {
-        char instruction[] = { input[i][0], input[i][1], input[i][2], '\0' };
-        
-        if (!strcmp(instruction, "jmp") || !strcmp(instruction, "nop")) numInstructionsChange++;
-    }
-
-    instructionChangeIndexes = (int*)malloc(numInstructionsChange * sizeof(int));
-
+	//Find the number of instructions that can be changed
     for (int i = 0; i < inputLength; i++)
-    {
-        char instruction[] = { input[i][0], input[i][1], input[i][2], '\0' };
-        
-        if (!strcmp(instruction, "jmp") || !strcmp(instruction, "nop"))
-        {
-            instructionChangeIndexes[previousInstructionChange] = i;
-            previousInstructionChange++;
-        }
-    }
+	{
+		char instruction[] = { input[i][0], input[i][1], input[i][2], '\0' };
 
-    for (int i = 0; i < numInstructionsChange; i++)
-    {
-        int test = changeInstruction(input, instructionChangeIndexes[i], inputLength);
+		if (!strcmp(instruction, "jmp") || !strcmp(instruction, "nop")) numInstructionsChange++;
+	}
 
-        printf("started thread %d\n", threadsRun);
+    //Create an array to store the indexes of every instruction that can be changed
+	instructionChangeIndexes = (int*)malloc(numInstructionsChange * sizeof(int*));
 
-        if (test != 0) 
-        {
-            printf("accumulator is %d", test);
-            return 0;
-        }
-    }
+	//Fill the instructionChangeIndexes array
+    for (int i = 0; i < inputLength; i++)
+	{
+		char instruction[] = { input[i][0], input[i][1], input[i][2], '\0' };
 
-	return 1;
-
-    previousInstructionChange = 0;
-
-    /*for (int i = 0; i < numInstructionsChange; i++) printf("%d\n", instructionChangeIndexes[i]);
-    printf("inputLength %d", inputLength);
-    printf("\n%d", numInstructionsChange);
-    return;*/
-
-    while(solutionFound == 0)
-    {
-        HANDLE* threadHandles = (HANDLE*)malloc(threads * sizeof(HANDLE*));
-	    ThreadData* threadData = (ThreadData*)malloc(threads * sizeof(ThreadData));
-        
-        for (int i = 0; i < threads; i++)
-        {
-            threadData[i].input = input;
-            threadData[i].instructionChangeIndex = instructionChangeIndexes[previousInstructionChange];
-            threadData[i].inputLength = inputLength;
-            previousInstructionChange++;
-
-            threadHandles[i] = CreateThread(NULL, 0, changeInstructionStart, (void*)&threadData[i], 0, NULL);
-            printf("started thread %d\n", previousInstructionChange);
-        }
-
-        // wait for everything to finish
-		for (unsigned int i = 0; i < threads; i++) 
+		if (!strcmp(instruction, "jmp") || !strcmp(instruction, "nop"))
 		{
-			int output = WaitForSingleObject(threadHandles[i], INFINITE);
-			if (output != 0) printf("accumulator is %d", output);
+			instructionChangeIndexes[currentIndex] = i;
+			currentIndex++;
 		}
+	}
 
-        free(threadHandles);
-        free(threadData);
-    }
+	currentIndex = 0;
+
+	//try changing each instruction in the instructionChangeIndexes array until the code gets to the end of the instruction array
+    while (solution == 0)
+	{
+        solution = changeInstruction(input, instructionChangeIndexes[currentIndex], inputLength);
+        currentIndex++;
+	}
+
+    printf("\naccumulator is %d\n", solution);
 };

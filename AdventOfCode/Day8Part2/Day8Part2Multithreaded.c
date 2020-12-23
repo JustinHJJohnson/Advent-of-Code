@@ -1,22 +1,17 @@
 #include <stdio.h>
 #include <stdbool.h>
+#include <Windows.h>
 
 /*
---- Day 8: Handheld Halting ---
+--- Part Two ---
 
-Your flight to the major airline hub reaches cruising altitude without incident. While you consider checking the in-flight menu for one of those drinks that come with a little umbrella, you are interrupted by the kid sitting next to you.
+After some careful analysis, you believe that exactly one instruction is corrupted.
 
-Their handheld game console won't turn on! They ask if you can take a look.
+Somewhere in the program, either a jmp is supposed to be a nop, or a nop is supposed to be a jmp. (No acc instructions were harmed in the corruption of this boot code.)
 
-You narrow the problem down to a strange infinite loop in the boot code (your puzzle input) of the device. You should be able to fix it, but first you need to be able to run the code in isolation.
+The program is supposed to terminate by attempting to execute an instruction immediately after the last instruction in the file. By changing exactly one jmp or nop, you can repair the boot code and make it terminate correctly.
 
-The boot code is represented as a text file with one instruction per line of text. Each instruction consists of an operation (acc, jmp, or nop) and an argument (a signed number like +4 or -20).
-
-    acc increases or decreases a single global value called the accumulator by the value given in the argument. For example, acc +7 would increase the accumulator by 7. The accumulator starts at 0. After an acc instruction, the instruction immediately below it is executed next.
-    jmp jumps to a new instruction relative to itself. The next instruction to execute is found using the argument as an offset from the jmp instruction; for example, jmp +2 would skip the next instruction, jmp +1 would continue to the instruction immediately below it, and jmp -20 would cause the instruction 20 lines above to be executed next.
-    nop stands for No OPeration - it does nothing. The instruction immediately below it is executed next.
-
-For example, consider the following program:
+For example, consider the same program from above:
 
 nop +0
 acc +1
@@ -28,29 +23,29 @@ acc +1
 jmp -4
 acc +6
 
-These instructions are visited in this order:
+If you change the first instruction from nop +0 to jmp +0, it would create a single-instruction infinite loop, never leaving that instruction. If you change almost any of the jmp instructions, the program will still eventually find another jmp instruction and loop forever.
+
+However, if you change the second-to-last instruction (from jmp -4 to nop -4), the program terminates! The instructions are visited in this order:
 
 nop +0  | 1
-acc +1  | 2, 8(!)
+acc +1  | 2
 jmp +4  | 3
-acc +3  | 6
-jmp -3  | 7
+acc +3  |
+jmp -3  |
 acc -99 |
 acc +1  | 4
-jmp -4  | 5
-acc +6  |
+nop -4  | 5
+acc +6  | 6
 
-First, the nop +0 does nothing. Then, the accumulator is increased from 0 to 1 (acc +1) and jmp +4 sets the next instruction to the other acc +1 near the bottom. After it increases the accumulator from 1 to 2, jmp -4 executes, setting the next instruction to the only acc +3. It sets the accumulator to 5, and jmp -3 causes the program to continue back at the first acc +1.
+After the last instruction (acc +6), the program terminates by attempting to run the instruction below the last instruction in the file. With this change, after the program terminates, the accumulator contains the value 8 (acc +1, acc +1, acc +6).
 
-This is an infinite loop: with this sequence of jumps, the program will run forever. The moment the program tries to run any instruction a second time, you know it will never terminate.
+Fix the program so that it terminates normally by changing exactly one jmp (to nop) or nop (to jmp). What is the value of the accumulator after the program terminates?
 
-Immediately before the program would run an instruction a second time, the value in the accumulator is 5.
+Your puzzle answer was 733.*/
 
-Run your copy of the boot code. Immediately before any instruction is executed a second time, what value is in the accumulator?
+LONG solutionFound = 0;     //Variable that stores the solution when it is found
 
-Your puzzle answer was 1753.*/
-
-//Get the value of the instruction
+//Get the value out of an instruction
 int getInstructionValue(char* input, int startIndex)
 {
 	//Calulate the start and end of the instruction value and how many digits it is
@@ -78,10 +73,88 @@ int getInstructionValue(char* input, int startIndex)
 	else return output / -1;
 }
 
+//Run the input instructions, changing the instruction at the instructionChangeIndex
+void changeInstruction(char* input[], int instructionChangeIndex, int inputLength, int threadID)
+{
+	int inputIndex = 0;																//Which index in the input array we are up to
+	int accumulator = 0;															//The accumulator
+	bool* instructionsRan = (bool*)calloc((size_t)inputLength - 1, sizeof(bool));	//Array of all the instructions that have already been ran
+
+	//loop over the input array until getting back to previously ran instructions or the end of the instructions
+	while (inputIndex < inputLength - 1 && instructionsRan[inputIndex] == false)
+	{
+		//Check if this is the instruction to change and 
+		if (inputIndex == instructionChangeIndex)
+		{
+			if (input[inputIndex][0] == 'j')
+			{
+				instructionsRan[inputIndex] = true;
+				inputIndex++;
+			}
+			else if (input[inputIndex][0] == 'n')
+			{
+				instructionsRan[inputIndex] = true;
+
+				int instruction = getInstructionValue(input[inputIndex], 5);
+
+				inputIndex += instruction;
+			}
+		}
+		//Check which instruction to run
+		else if (input[inputIndex][0] == 'a')
+		{
+			int instruction = getInstructionValue(input[inputIndex], 5);
+
+			accumulator += instruction;
+
+			instructionsRan[inputIndex] = true;
+			inputIndex++;
+		}
+		else if (input[inputIndex][0] == 'j')
+		{
+			instructionsRan[inputIndex] = true;
+
+			int instruction = getInstructionValue(input[inputIndex], 5);
+
+			inputIndex += instruction;
+		}
+		else if (input[inputIndex][0] == 'n')
+		{
+			instructionsRan[inputIndex] = true;
+			inputIndex++;
+		}
+	}
+
+	free(instructionsRan);
+
+	if (inputIndex == inputLength - 1) solutionFound = accumulator;
+	return;
+}
+
+//Struct to store the information for each thread
+typedef struct ThreadData
+{
+	char** input;
+	int instructionChangeIndex;
+	int inputLength;
+	int threadID;
+} ThreadData;
+
+DWORD __stdcall changeInstructionStart(LPVOID threadData)
+{
+	// cast the pointer to void (i.e. an untyped pointer) into something we can use
+	ThreadData* data = (ThreadData*)threadData;
+
+	// pass parameters through
+	changeInstruction(data->input, data->instructionChangeIndex, data->inputLength, data->threadID);
+
+	ExitThread(NULL);
+}
+
 int main(int argc, char* argv[])
 {
 	char* input[] =
-    {
+	{
 		"acc +29",
 		"acc +0",
 		"acc +36",
@@ -725,39 +798,66 @@ int main(int argc, char* argv[])
 		"jmp +1",
 	};
 
-    int inputLength = sizeof(input) / sizeof(char*);	                        //The length of the input array
-	int inputIndex = 0;									                        //Which index in the input array we are up to
-    int accumulator = 0;                                                        //The accumulator
-    bool *instructionsRan = (bool*)calloc(inputLength - 1, sizeof(bool));       //Array of all the instructions that have already been ran
+	int threads = 12;									//Number of threads to use											
+	int inputLength = sizeof(input) / sizeof(char*);	//The length of the input array
+	int numInstructionsChange = 0;                      //The number of instructions that can be changed to try to stop the halting problem
+	int currentIndex = 0;                               //The current index in the instructionChangeIndexes array                
+	int* instructionChangeIndexes;                      //Stores the indexes of all the instructions that can be changed
 
-    //loop over the input array until getting back to previously ran instruction
-	while (!instructionsRan[inputIndex])
+	//Find the number of instructions that can be changed
+    for (int i = 0; i < inputLength; i++)
 	{
-        //Check which instruction to run
-		if (input[inputIndex][0] == 'a')
+		char instruction[] = { input[i][0], input[i][1], input[i][2], '\0' };
+
+		if (!strcmp(instruction, "jmp") || !strcmp(instruction, "nop")) numInstructionsChange++;
+	}
+
+    //Create an array to store the indexes of every instruction that can be changed
+	instructionChangeIndexes = (int*)malloc(numInstructionsChange * sizeof(int*));
+
+	//Fill the instructionChangeIndexes array
+    for (int i = 0; i < inputLength; i++)
+	{
+		char instruction[] = { input[i][0], input[i][1], input[i][2], '\0' };
+
+		if (!strcmp(instruction, "jmp") || !strcmp(instruction, "nop"))
 		{
-			int instruction = getInstructionValue(input[inputIndex], 5);
-
-			accumulator += instruction;
-
-			instructionsRan[inputIndex] = true;
-			inputIndex++;
-		}
-		else if (input[inputIndex][0] == 'j')
-		{
-			instructionsRan[inputIndex] = true;
-
-			int instruction = getInstructionValue(input[inputIndex], 5);
-
-			inputIndex += instruction;
-
-		}
-		else if (input[inputIndex][0] == 'n')
-		{
-			instructionsRan[inputIndex] = true;
-			inputIndex++;
+			instructionChangeIndexes[currentIndex] = i;
+			currentIndex++;
 		}
 	}
 
-    printf("accumulator is %d\n", accumulator);
+	currentIndex = 0;
+
+	//try changing each instruction in the instructionChangeIndexes array until the code gets to the end of the instruction array
+	while (solutionFound == 0 && currentIndex < numInstructionsChange)
+	{
+		//Make sure that the threads don't go past the end of the instructionChangeIndexes array
+		if (currentIndex + threads > numInstructionsChange) threads = numInstructionsChange - currentIndex;
+		
+		//Setup the thread handles and thread data
+		HANDLE* threadHandles = (HANDLE*)malloc(threads * sizeof(HANDLE));
+		ThreadData* threadData = (ThreadData*)malloc(threads * sizeof(ThreadData));
+
+		//Create and run the specified number of threads
+		for (int i = 0; i < threads && currentIndex < numInstructionsChange; i++)
+		{
+			threadData[i].input = input;
+			threadData[i].instructionChangeIndex = instructionChangeIndexes[currentIndex];
+			threadData[i].inputLength = inputLength;
+			threadData[i].threadID = i;
+			currentIndex++;
+
+			threadHandles[i] = CreateThread(NULL, 0, changeInstructionStart, (void*)&threadData[i], 0, NULL);
+		}
+
+		// wait for threads to finish
+		WaitForMultipleObjects(threads, threadHandles, true, INFINITE);
+
+		//Free up memory
+		free(threadHandles);
+		free(threadData);
+	}
+
+	printf("\naccumulator is %d\n", solutionFound);
 };
