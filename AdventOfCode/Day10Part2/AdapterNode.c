@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "AdapterNode.h"
+#include "Adapter.h"
 
 
 struct AdapterNodeInt {
@@ -13,7 +14,7 @@ struct AdapterNodeInt {
 /*
 * 'Initialiser' for node
 */
-void init_node(AdapterNode *np, int adapter)
+void init_node(AdapterNode *np, Adapter* adapter)
 {
 	*np = (AdapterNode)malloc(sizeof(struct AdapterNodeInt));
 	(*np)->adapter = adapter;
@@ -24,7 +25,7 @@ void init_node(AdapterNode *np, int adapter)
 * Getter for adapter
 * Return adapter field
 */
-void *getAdapter(AdapterNode n)
+Adapter getAdapter(AdapterNode n)
 {
 	return(n->adapter);
 }
