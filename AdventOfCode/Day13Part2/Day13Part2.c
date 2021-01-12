@@ -69,7 +69,7 @@ What is the earliest timestamp such that all of the listed bus IDs depart at off
 
 int main(int argc, char* argv[])
 {
-	char* input[] =
+	/*char* input[] =
     {
 		"17",
 		"x",
@@ -139,13 +139,15 @@ int main(int argc, char* argv[])
 		"x",
 		"x",
 		"19",
-	};
+	};*/
+
+	char* input[] = {"67","7","x","59","61"};
 
     //48
 
 	int inputLength = sizeof(input) / sizeof(char*);	//The length of the input array
 	int solutionTimestamp = 0;
-    int currentTimestamp = 0;
+    int currentTimestamp = atoi(input[0]);
     bool solutionFound = false;
     int numBuses = 0;
     int* busesTimes;
@@ -171,19 +173,28 @@ int main(int argc, char* argv[])
 	while (!solutionFound)
     {
         solutionFound = true;
-        printf("current timestamp %d\n", currentTimestamp);
+        //printf("current timestamp %d\n", currentTimestamp);
         //increment++;
         
         for (int i = 0; i < numBuses; i++)
         {
-            if ((currentTimestamp + busesTimes[i]) % atoi(input[busesTimes[i]]) != 0)
+            //printf("%d %d %d %d\n", currentTimestamp, currentTimestamp + busesTimes[i], atoi(input[busesTimes[i]]), busesTimes[i]);
+			
+			if ((currentTimestamp + busesTimes[i]) % atoi(input[busesTimes[i]]) != 0)
             {
                 solutionFound = false;
+				break;
                 //printf("%d %s\n", currentTimestamp + busesTimes[i], input[busesTimes[i]]);
             }
         }
 
         if (!solutionFound) currentTimestamp += atoi(input[0]);
+
+		/*if (currentTimestamp > 754018)
+		{
+			printf("Shit broky");
+			solutionFound = true;
+		}*/
 
         //if (increment == 100) solutionFound = true;
     }
