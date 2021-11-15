@@ -5,16 +5,26 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "cl.exe - Build and debug active file",
-            "type": "cppvsdbg",
+            "name": "g++.exe - Build and debug active file",
+            "type": "cppdbg",
             "request": "launch",
             "program": "${fileDirname}\\${fileBasenameNoExtension}.exe",
             "args": [],
             "stopAtEntry": false,
-            "cwd": "${workspaceFolder}",
+            //"cwd": "C:/msys64/mingw64/bin",
+            "cwd": "${fileDirname}",
             "environment": [],
-            "externalConsole": false,
-            "preLaunchTask": "C/C++: cl.exe build active file"
+            "externalConsole": true,
+            "MIMode": "gdb",
+            "miDebuggerPath": "C:\\msys64\\mingw64\\bin\\gdb.exe",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": false
+                }
+            ],
+            "preLaunchTask": "C/C++: g++.exe build active file"
         }
     ]
 }
