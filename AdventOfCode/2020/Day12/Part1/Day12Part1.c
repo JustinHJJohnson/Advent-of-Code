@@ -52,34 +52,35 @@ Your puzzle answer was 1177.
 const int directions[] = {NORTH, EAST, SOUTH, WEST};
 
 // Mod that handles a negative a value.
-inline int mod(int a, int base)
+//inline int mod(int a, int base)
+int mod(int a, int base)
 {    
   	return (base + a % base) % base;
 }
 
-typedef struct 
+typedef struct
 {
-	int dIndex;	// Index into direction array
 	int x;
 	int y;
+	int dIndex;	// Index into direction array
 } Ship;
 
-void shipInit(Ship *ship)
+void shipInit(Ship* ship)
 {
-	ship = (Ship *)malloc(sizeof(Ship));
+	*ship = *(Ship*)malloc(sizeof(Ship));
 	
-	ship->dIndex = 1;
 	ship->x = 0;
 	ship->y = 0;
+	ship->dIndex = 1;
 }
 
-void turnShip(Ship *ship, char direction, int degrees)
+void turnShip(Ship* ship, char direction, int degrees)
 {
-	if (direction == 'L') degrees -= 2 * degrees;
+	if (direction == 'L') degrees *= -1;
 	ship->dIndex = mod((ship->dIndex + (degrees / 90)), 4);
 }
 
-void moveShipForward(Ship *ship, int distance)
+void moveShipForward(Ship* ship, int distance)
 {
 	switch (directions[ship->dIndex])
 	{
@@ -98,7 +99,7 @@ void moveShipForward(Ship *ship, int distance)
 	}
 }
 
-void moveShipInDirection(Ship *ship, char direction, int distance)
+void moveShipInDirection(Ship* ship, char direction, int distance)
 {
 	switch(direction)
     {
@@ -117,10 +118,10 @@ void moveShipInDirection(Ship *ship, char direction, int distance)
 	}
 }
 
-char **readInput(const char *filename, int lineLength, int *numLines)
+char** readInput(const char *filename, int lineLength, int *numLines)
 {
 	// Open File
-	FILE *fp = fopen(filename, "r");
+	FILE* fp = fopen(filename, "r");
 
 	if(!fp)
 	{
@@ -135,14 +136,14 @@ char **readInput(const char *filename, int lineLength, int *numLines)
 
 	while(cr != EOF) 
 	{
-		if ( cr == '\n' ) lines++;
+		if (cr == '\n') lines++;
 		cr = getc(fp);
 	}
 	printf("Number of lines: %ld\n", lines); 
 	rewind(fp);
 
 	// Read data
-	char **data = (char**)malloc(lines * sizeof(char*));
+	char** data = (char**)malloc(lines * sizeof(char*));
 	int n;
 
 	for (int i = 0; i < lines; i++) 
@@ -174,9 +175,9 @@ int main(int argc, char* argv[])
     Ship ship;
 	shipInit(&ship);
 
-	char *filename = "..\\..\\inputs\\Day12.txt";
+	const char* filename = "..\\..\\..\\inputs\\2020\\Day12.txt";
 
-	FILE *fp = fopen(filename, "r");
+	FILE* fp = fopen(filename, "r");
 
 	if(!fp)
 	{
@@ -187,11 +188,7 @@ int main(int argc, char* argv[])
 
 	char buffer[6];
 	int linesPrinted = 1;
-	
-	// Weird hack because ship is not setting up y properly
-    ship.x = 0;		
-    ship.y = 0;		
-    ship.dIndex = 1;
+
 	//printf("Starting state %d, %d, facing %d\n", ship.x, ship.y, ship.dIndex);
 
 	while (fgets(buffer, 10, fp))
@@ -221,5 +218,6 @@ int main(int argc, char* argv[])
 	printf("Ship is at %d, %d facing %d\n", ship.x, ship.y, directions[ship.dIndex]);
 	printf("Ship's Manhattan distance is %d\n", abs(ship.x) + abs(ship.y));
 
+	
 	getchar();
 }
