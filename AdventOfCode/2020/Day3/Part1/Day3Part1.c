@@ -98,7 +98,7 @@ char** readInput(const char* filename, int lineLength, int* numLines, bool debug
 	for (int i = 0; i < lines; i++) 
 	{
 		data[i] = (char*)malloc(lineLength * sizeof(char));
-		fscanf(fp, "%s", data[i]);
+		fgets(data[i], lineLength, fp);
 
 		if (ferror(fp))
 		{
@@ -122,9 +122,9 @@ char** readInput(const char* filename, int lineLength, int* numLines, bool debug
 int main(int argc, char* argv[])
 {
 	int height;														// Height of the grid
-	const char* filename = "..\\..\\inputs\\Day3.txt";	// Path to the input file
+	const char* filename = "..\\..\\inputs\\Day3.txt";				// Path to the input file
 	char** input = readInput(filename, 40, &height, false);			// Store the input file and get the height of the grid
-	const int width = strlen(input[0]);								// Width of the grid
+	const int width = strlen(input[0]) - 1;							// Width of the grid (strlen seems to count the \0 character when using fgets)
 	const int rightMove = 3;										// How far to move right each time
 	const int downMove = 1;											// How far to move down each time
 	Position currentPos = { 0, 0 };									// Current position in the grid

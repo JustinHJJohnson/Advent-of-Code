@@ -58,7 +58,7 @@ char** readInput(const char* filename, int lineLength, int* numLines, bool debug
 	for (int i = 0; i < lines; i++) 
 	{
 		data[i] = (char*)malloc(lineLength * sizeof(char));
-		fscanf(fp, "%s", data[i]);
+		fgets(data[i], lineLength, fp);
 
 		if (ferror(fp))
 		{
@@ -102,11 +102,11 @@ int numTreesEncountered(char** input, int rightMove, int downMove, int width, in
 
 int main(int argc, char* argv[])
 {
-	int height;														// Height of the grid
-	const char* filename = "..\\..\\inputs\\Day3.txt";	// Path to the input file
-	char** input = readInput(filename, 35, &height, false);			// Store the input file and get the height of the grid
-	const int width = strlen(input[0]);								// Width of the grid
-	int treeCountTotal = 0;											// Total number of trees encountered over multiple runs
+	int height;													// Height of the grid
+	const char* filename = "..\\..\\inputs\\Day3.txt";			// Path to the input file
+	char** input = readInput(filename, 35, &height, false);		// Store the input file and get the height of the grid
+	const int width = strlen(input[0]) - 1;						// Width of the grid (strlen seems to count the \0 character when using fgets)
+	int treeCountTotal = 0;										// Total number of trees encountered over multiple runs
 
 	int run1 = numTreesEncountered(input, 1, 1, width, height);
 	int run2 = numTreesEncountered(input, 3, 1, width, height);

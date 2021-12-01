@@ -34,8 +34,8 @@ int main(int argc, char* argv[])
 	int numValidPasswords = 0;		// Total number of valid passwords
 
 	const char* filename = "..\\..\\inputs\\Day2.txt";	// Path to the input file to read
-	char buffer[50];												// Buffer to store the passwords from the file
-	FILE* fp = fopen(filename, "r");								// Open the file and store the file
+	char buffer[50];									// Buffer to store the passwords from the file
+	FILE* fp = fopen(filename, "r");					// Open the file and store the file
 
 	// Make sure the file successfully opened
 	if(!fp)
