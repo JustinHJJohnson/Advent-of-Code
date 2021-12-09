@@ -179,7 +179,7 @@ int main(int argc, char* argv[])
 	const char* filename = "..\\..\\inputs\\Day6.txt";					// Path to the input file
 	char** input = readInput(filename, 610, &inputLength, false);		// Read in the input file and get it's length
 	int* intInput = stringToInts(input[0], ',', &inputLength, false);	// The input converted to an array of ints
-	long long int fishCounts[9] = {0,0,0,0,0,0,0,0,0};							// The number of fish grouped by time till they create another lanternfish
+	long long int fishCounts[9] = {0,0,0,0,0,0,0,0,0};					// The number of fish grouped by time till they create another lanternfish
 	for (int i = 0; i < inputLength; i++) fishCounts[intInput[i]]++;
 
 	//for (int i = 0; i < 9; i++) printf("%d fish with %d on their timer\n", fishCounts[i], i);
