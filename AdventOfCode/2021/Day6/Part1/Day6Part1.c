@@ -2,8 +2,6 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#pragma warning(disable:4996)
-
 /*
 --- Day 6: Lanternfish ---
 
@@ -59,9 +57,10 @@ In this example, after 18 days, there are a total of 26 fish. After 80 days, the
 
 Find a way to simulate lanternfish. How many lanternfish would there be after 80 days?
 
+Your puzzle answer was 388739.
 */
 
-typedef struct Node Node;
+/*typedef struct Node Node;
 
 struct Node {
 	int timer;
@@ -104,7 +103,7 @@ void printList(Node* head)
 		current = current->next;
 	}
 	printf("\n");
-}
+}*/
 
 char** readInput(const char* filename, int lineLength, int* numLines, bool debug)
 {
@@ -195,45 +194,27 @@ int* stringToInts(char* input, char token, int* numInts, bool debug)
 	return ints;
 }
 
-int nextDay(Node* head)
+int simulateDays(int fish[], int numDays)
 {
+	int newFish[9];
 	int numFish = 0;
-	Node* current = head;
-	Node* newFish = NULL;
-	Node* temp;
-	if (current == NULL) return -1;
-
-	while (current->next != NULL)
+	
+	for (int i = 0; i < numDays; i++)
 	{
-		if (current->timer == 0)
-		{
-			insertEnd(8, &newFish);
-			current->timer = 6;
-		}
-		else current->timer--;
+		newFish[0] = fish[1];
+		newFish[1] = fish[2];
+		newFish[2] = fish[3];
+		newFish[3] = fish[4];
+		newFish[4] = fish[5];
+		newFish[5] = fish[6];
+		newFish[6] = fish[7] + fish[0];
+		newFish[7] = fish[8];
+		newFish[8] = fish[0];
 
-		numFish++;
-		current = current->next;
+		for (int i = 0; i < 9; i++) fish[i] = newFish[i];
 	}
 
-	// Process the last node
-	if (current->timer == 0)
-	{
-		insertEnd(8, &newFish);
-		current->timer = 6;
-	}
-	else current->timer--;
-
-	numFish++;
-	temp = newFish;
-
-	while (temp != NULL)
-	{
-		numFish++;
-		temp = temp->next;
-	}
-		
-	current->next = newFish;
+	for (int i = 0; i < 9; i++) numFish += newFish[i];
 
 	return numFish;
 }
@@ -241,16 +222,15 @@ int nextDay(Node* head)
 int main(int argc, char* argv[])
 {
 	int inputLength;													// How long the input file is
-	const char* filename = "E:\\Documents\\Personal Projects\\Advent-of-Code\\AdventOfCode\\2021\\inputs\\Day6.txt";					// Path to the input file
+	const char* filename = "..\\..\\inputs\\Day6.txt";					// Path to the input file
 	char** input = readInput(filename, 610, &inputLength, false);		// Read in the input file and get it's length
 	int* intInput = stringToInts(input[0], ',', &inputLength, false);	// The input converted to an array of ints
-	Node* head = NULL;
-	for (int i = 0; i < inputLength; i++) insertEnd(intInput[i], &head);
+	int fishCounts[9] = {0,0,0,0,0,0,0,0,0};							// The number of fish grouped by time till they create another lanternfish
+	for (int i = 0; i < inputLength; i++) fishCounts[intInput[i]]++;
 
-	int numFish = inputLength;
-	for (int i = 0; i < 256; i++) numFish = nextDay(head);
-
-	printf("There is %d lanternfish after 80 days\n", numFish);
+	//for (int i = 0; i < 9; i++) printf("%d fish with %d on their timer\n", fishCounts[i], i);
+	
+	printf("There is %d lanternfish after 80 days\n", simulateDays(fishCounts, 80));
 
 	getchar();
 }

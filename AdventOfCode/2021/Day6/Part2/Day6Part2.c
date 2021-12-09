@@ -5,62 +5,89 @@
 /*
 --- Part Two ---
 
-Unfortunately, considering only horizontal and vertical lines doesn't give you the full picture; you need to also consider diagonal lines.
+Suppose the lanternfish live forever and have unlimited food and space. Would they take over the entire ocean?
 
-Because of the limits of the hydrothermal vent mapping system, the lines in your list will only ever be horizontal, vertical, or a diagonal line at exactly 45 degrees. In other words:
+After 256 days in the example above, there would be a total of 26984457539 lanternfish!
 
-    An entry like 1,1 -> 3,3 covers points 1,1, 2,2, and 3,3.
-    An entry like 9,7 -> 7,9 covers points 9,7, 8,8, and 7,9.
+How many lanternfish would there be after 256 days?
 
-Considering all lines from the above example would now produce the following diagram:
-
-1.1....11.
-.111...2..
-..2.1.111.
-...1.2.2..
-.112313211
-...1.2....
-..1...1...
-.1.....1..
-1.......1.
-222111....
-
-You still need to determine the number of points where at least two lines overlap. In the above example, this is still anywhere in the diagram with a 2 or larger - now a total of 12 points.
-
-Consider all of the lines. At how many points do at least two lines overlap?
-
-Your puzzle answer was 20299.
+Your puzzle answer was 1741362314973.
 */
+
+/*typedef struct Node Node;
+
+struct Node {
+	int timer;
+	Node* next;
+};
+
+Node* makeNode(int value)
+{
+	Node* node = (Node*)malloc(sizeof(Node));
+	node->timer = value;
+	node->next = NULL;
+	return node;
+}
+
+void insertEnd(int value, Node** head)
+{
+	Node* node = makeNode(value);
+
+	Node* currentNode = *head;
+
+	if (*head == NULL)
+	{
+		*head = node;
+		return;
+	}
+
+	while (currentNode->next != NULL) currentNode = currentNode->next;
+
+	currentNode->next = node;
+}
+
+void printList(Node* head)
+{
+	Node* current = head;
+	if (current == NULL) return;
+
+	while (current != NULL)
+	{
+		printf("%d, ", current->timer);
+		current = current->next;
+	}
+	printf("\n");
+}*/
 
 char** readInput(const char* filename, int lineLength, int* numLines, bool debug)
 {
 	// Open File
 	FILE* fp = fopen(filename, "r");
 
-	if(!fp)
+	if (!fp)
 	{
 		perror("getline");
-  		exit;
+		exit;
 	}
-	if (debug) printf("Opened file: %s\n", filename); 
+	if (debug) printf("Opened file: %s\n", filename);
 
 	// Count Lines
-	char cr;
+	char cr = 'a';
 	int lines = 0;
 
-	while(cr != EOF) 
+	while (cr != EOF)
 	{
 		if (cr == '\n') lines++;
 		cr = getc(fp);
 	}
-	if (debug) printf("Number of lines: %ld\n", lines); 
+	if (debug) printf("Number of lines: %ld\n", lines);
 	rewind(fp);
 
 	// Read data
 	char** data = (char**)malloc(lines * sizeof(char*));
 	int n;
 
-	for (int i = 0; i < lines; i++) 
+	for (int i = 0; i < lines; i++)
 	{
 		data[i] = (char*)malloc(lineLength * sizeof(char));
 		fgets(data[i], lineLength, fp);
@@ -69,14 +96,14 @@ char** readInput(const char* filename, int lineLength, int* numLines, bool debug
 		{
 			perror("fopen");
 			exit;
-		}	
+		}
 	}
 
 	if (debug)
 	{
 		for (int i = 0; i < lines; i++) printf("%s\n", data[i]);
 	}
-	
+
 	// Close File
 	fclose(fp);
 
@@ -105,8 +132,8 @@ int* stringToInts(char* input, char token, int* numInts, bool debug)
 	numIntsLocal++;
 
 	if (debug) printf("Number of numbers is %d\n", numIntsLocal);
-	
-	int* ints = malloc(numIntsLocal * sizeof(int));
+
+	int* ints = (int*)malloc(numIntsLocal * sizeof(int));
 	current = &input[0] - 1;
 
 	for (int i = 0; *current != '\n'; i++)
@@ -121,169 +148,43 @@ int* stringToInts(char* input, char token, int* numInts, bool debug)
 	return ints;
 }
 
-typedef struct {
-	int x1;
-	int y1;
-	int x2;
-	int y2;
-} Point;
-
-Point* formatInput(char** input, int* inputLength)
+long long int simulateDays(long long int fish[], int numDays)
 {
-	Point* filteredInput = malloc(*inputLength * sizeof(*filteredInput));
+	long long int newFish[9];
+	long long int numFish = 0;
 	
-	for (int i = 0; i < *inputLength; i++)
+	for (int i = 0; i < numDays; i++)
 	{
-		char c = input[i][0];
-		int endCoord1 = 0;
-		int startCoord2;
-		int endCoord2;
+		newFish[0] = fish[1];
+		newFish[1] = fish[2];
+		newFish[2] = fish[3];
+		newFish[3] = fish[4];
+		newFish[4] = fish[5];
+		newFish[5] = fish[6];
+		newFish[6] = fish[7] + fish[0];
+		newFish[7] = fish[8];
+		newFish[8] = fish[0];
 
-		while (c != ' ') 
-		{
-			c = input[i][endCoord1];
-			endCoord1++;
-		}
-
-		endCoord1 -= 2;
-		
-		startCoord2 = endCoord1 + 2;
-		c = input[i][startCoord2];
-
-		while (c != ' ') 
-		{
-			c = input[i][startCoord2];
-			startCoord2++;
-		}
-		startCoord2;
-
-		endCoord2 = startCoord2 + 1;
-
-		while (c != '\n') 
-		{
-			c = input[i][endCoord2];
-			endCoord2++;
-		}
-
-		endCoord2 -= 2;
-		int length = (endCoord1 + (endCoord2 - startCoord2) + 4);
-		char* formatted = malloc(length * sizeof(char));
-		int currentIndex = 0;
-
-		for (int j = 0; j <= endCoord1; j++) 
-		{
-			formatted[j] = input[i][j];
-			currentIndex++;
-		}
-		formatted[currentIndex] = ',';
-		currentIndex++;
-		int endFormat1 = currentIndex;
-		for (int j = currentIndex; j <= endFormat1 + (endCoord2 - startCoord2); j++)
-		{
-			formatted[j] = input[i][j + 3];
-			currentIndex++;
-		}
-		formatted[currentIndex] = '\n';
-		formatted[currentIndex + 1] = '\0';
-
-		int* coords = stringToInts(formatted, ',', NULL, false);
-
-		filteredInput[i].x1 = coords[0]; 
-		filteredInput[i].y1 = coords[1]; 
-		filteredInput[i].x2 = coords[2]; 
-		filteredInput[i].y2 = coords[3];
+		for (int i = 0; i < 9; i++) fish[i] = newFish[i];
 	}
 
-	return filteredInput;
-}
+	for (int i = 0; i < 9; i++) numFish += newFish[i];
 
-// Plot the lines on the grid
-void plotLines(Point* input, int inputLength, int** grid)
-{
-	for (int i = 0; i < inputLength; i++)
-	{
-		// Vertical
-		if (input[i].x1 == input[i].x2)
-		{
-			// Down
-			if (input[i].y1 < input[i].y2)
-			{
-				for (int j = input[i].y1; j <= input[i].y2; j++) grid[input[i].x1][j]++;
-			}
-			// Up
-			else
-			{
-				for (int j = input[i].y2; j <= input[i].y1; j++) grid[input[i].x1][j]++;
-			}
-		}
-		// Horizontal
-		else if (input[i].y1 == input[i].y2)
-		{
-			// Right
-			if (input[i].x1 < input[i].x2)
-			{
-				for (int j = input[i].x1; j <= input[i].x2; j++) grid[j][input[i].y1]++;
-			}
-			// Left
-			else
-			{
-				for (int j = input[i].x2; j <= input[i].x1; j++) grid[j][input[i].y1]++;
-			}
-		}
-		// Diagonal
-		else
-		{
-			// Down and right
-			if (input[i].y1 < input[i].y2 && input[i].x1 < input[i].x2)
-			{
-				for (int j = 0; j <= input[i].y2 - input[i].y1; j++) grid[input[i].x1 + j][input[i].y1 + j]++;
-			}
-			// Up and left
-			else if (input[i].y1 > input[i].y2 && input[i].x1 > input[i].x2)
-			{
-				for (int j = 0; j >= input[i].y2 - input[i].y1; j--) grid[input[i].x1 + j][input[i].y1 + j]++;
-			}
-			// Down and left
-			else if (input[i].y1 < input[i].y2 && input[i].x1 > input[i].x2)
-			{
-				for (int j = 0; j <= input[i].y2 - input[i].y1; j++) grid[input[i].x1 - j][input[i].y1 + j]++;
-			}
-			// Up and right
-			else if (input[i].y1 > input[i].y2 && input[i].x1 < input[i].x2)
-			{
-				for (int j = 0; j <= input[i].x2 - input[i].x1; j++) grid[input[i].x1 + j][input[i].y1 - j]++;
-			}
-		}
-
-	}
-}
-
-int checkGrid(int** grid)
-{
-	int numOverThreshold = 0;
-	for (int i = 0; i < 1000; i++)
-	{
-		for (int j = 0; j < 1000; j++)
-		{
-			if (grid[i][j] >= 2) numOverThreshold++;
-		}
-	}
-	
-	return numOverThreshold;
+	return numFish;
 }
 
 int main(int argc, char* argv[])
-{	
+{
 	int inputLength;													// How long the input file is
-	const char* filename = "..\\..\\inputs\\Day5.txt";					// Path to the input file
-	char** input = readInput(filename, 25, &inputLength, false);		// Read in the input file and get it's length
-	Point* filteredInput = formatInput(input, &inputLength);			// Input converted to ints and with diagonal moves removed
-	// Allocating memory for the grid of the ocean floor
-	int** oceanFloor = malloc(1000 * sizeof(int*));
-	for (int i = 0; i < 1000; i++) oceanFloor[i] = calloc(1000, sizeof(int));
+	const char* filename = "..\\..\\inputs\\Day6.txt";					// Path to the input file
+	char** input = readInput(filename, 610, &inputLength, false);		// Read in the input file and get it's length
+	int* intInput = stringToInts(input[0], ',', &inputLength, false);	// The input converted to an array of ints
+	long long int fishCounts[9] = {0,0,0,0,0,0,0,0,0};							// The number of fish grouped by time till they create another lanternfish
+	for (int i = 0; i < inputLength; i++) fishCounts[intInput[i]]++;
 
-	plotLines(filteredInput, inputLength, oceanFloor);
-	printf("There are %d spots where 2 or more lines overlap\n", checkGrid(oceanFloor));
+	//for (int i = 0; i < 9; i++) printf("%d fish with %d on their timer\n", fishCounts[i], i);
+	
+	printf("There is %lld lanternfish after 256 days\n", simulateDays(fishCounts, 256));
 
 	getchar();
 }
